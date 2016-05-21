@@ -1,5 +1,6 @@
 import pygame
 import tankgame
+import sys
 from math import pi
  
 TITLE = "Tank Game"
@@ -24,9 +25,7 @@ while not done:
             done=True # Flag that we are done so we exit this loop
 
     # Update
-    game.read_network()
     game.update()
-    game.send_network()
      
     # Render
     screen.fill((0,0,0))
@@ -35,3 +34,4 @@ while not done:
  
 game.quit()
 pygame.quit()
+sys.exit(0)

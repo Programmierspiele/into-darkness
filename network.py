@@ -1,5 +1,6 @@
 import socket
 import json
+import sys
 from threading import Thread
 
 class Network(object):
@@ -10,19 +11,22 @@ class Network(object):
         self.parent = parent
         self.running = True
         self.connections = []
-        t = Thread(target=self.accept, args=(self.server,))
+        self.threads = []
+        t = Thread(target=self.accept)
+        t.setDaemon(True)
         t.start()
         # self.parent.add_event(event)
         
     def accept(self):
         while self.running:
-            try:
+            #try:
                 (sock, addr) = self.server.accept()
                 self.connections.append(sock)
                 t = Thread(target=self.connection, args=(sock,))
+                t.setDaemon(True)
                 t.start()
-            except:
-                print("Unexpected error:", sys.exc_info()[0])
+            #except:
+            #    print("Unexpected error:", sys.exc_info()[0])
             
     def connection(self, sock):
         sf = sock.makefile()

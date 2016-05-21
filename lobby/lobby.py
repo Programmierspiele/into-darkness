@@ -30,9 +30,9 @@ class Lobby(object):
                     else:
                         event["sock"].send(json.dumps({"name": None}))
     
-        if len(players) > MIN_PLAYERS:
+        if len(self.players) > MIN_PLAYERS:
           self.timeout -= 1
-          if len(players) >= MAX_PLAYERS:
+          if len(self.players) >= MAX_PLAYERS:
             self.timeout = 0
         else:
           self.timeout = INIT_TIMEOUT
