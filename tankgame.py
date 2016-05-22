@@ -20,8 +20,9 @@ class GameManager(object):
         self.state = Game(self, players, observers)
         
     def end_game(self):
-        self.state.quit()
+        tmp = self.state
         self.state = Lobby(self)
+        tmp.quit()
 
     def select_player(self, number):
         self.state.select_player(number)

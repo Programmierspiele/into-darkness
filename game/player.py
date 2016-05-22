@@ -46,7 +46,8 @@ class Player(object):
         return {"x": self.pose["x"], "y": self.pose["y"], "theta": self.pose["theta"], "aim": self.pose["aim"],
                 "health": self.health, "shootstate": self.shootstate, "respawn": self.respawn,
                 "reload_primary": self.primary_reload, "reload_secondary": self.secondary_reload, "name": self.name,
-                "movespeed": self.movespeed, "turnspeed": self.turnspeed, "aimspeed": self.aimspeed}
+                "movespeed": self.movespeed, "turnspeed": self.turnspeed, "aimspeed": self.aimspeed,
+                "size": self.get_size(), "bloom": self.bloom}
 
     def damage(self, damage, dmg_heading, owner):
         dh = self.pose["theta"] - dmg_heading

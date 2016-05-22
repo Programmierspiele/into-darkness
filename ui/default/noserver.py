@@ -1,0 +1,20 @@
+import pygame
+
+INIT_TIMEOUT = 1 * 60
+
+
+class NoServer(object):
+    def __init__(self):
+        pass
+
+    @staticmethod
+    def render(screen, width, height):
+        centerX = width // 2
+
+        myfont = pygame.font.SysFont("Arial", 56)
+        label = myfont.render("No Server", 1, (255, 255, 255))
+        screen.blit(label, (centerX - label.get_width() // 2, height // 4 - label.get_height() // 2))
+
+        myfont = pygame.font.SysFont("Arial", 32)
+        label = myfont.render("Waiting for server", 1, (255, 255, 255))
+        screen.blit(label, (centerX - label.get_width() // 2, height // 2 - label.get_height() // 2))

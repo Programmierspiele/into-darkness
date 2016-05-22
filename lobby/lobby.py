@@ -2,7 +2,7 @@ import json
 
 MIN_PLAYERS = 2
 MAX_PLAYERS = 16
-INIT_TIMEOUT = 1 * 60
+INIT_TIMEOUT = 30 * 30  # ~ 30 seconds lobby
 OBSERVER_PW = "wasdwasd1234"
 
 
@@ -50,9 +50,15 @@ class Lobby(object):
           self.parent.start_game(self.players, self.observers)
 
         for player in self.players:
-            player.send(json.dumps({"lobby": {"players": self.names, "timeout": self.timeout}}) + "\n")
+            try:
+                player.send(json.dumps({"lobby": {"players": self.names, "timeout": self.timeout}}) + "\n")
+            except:
+                del self.players[player]
         for observer in self.observers:
-            observer.send(json.dumps({"lobby": {"players": self.names, "timeout": self.timeout}}) + "\n")
+            try:
+                observer.send(json.dumps({"lobby": {"players": self.names, "timeout": self.timeout}}) + "\n")
+            except:
+                self.observers.remove(observer)
     
     def quit(self):
         pass

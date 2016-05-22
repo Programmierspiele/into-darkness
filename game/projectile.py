@@ -20,7 +20,7 @@ class Projectile(object):
 
     def get_state(self):
         return {"x": self.pose["x"], "y": self.pose["y"], "theta": self.pose["theta"], "owner": self.owner,
-                "speed": self.speed, "damage": self.damage, "type": self.type}
+                "speed": self.speed, "damage": self.damage, "type": self.type, "dead": self.dead}
 
     def update(self, players, projectiles):
         if self.dead > 0:

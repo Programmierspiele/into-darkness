@@ -4,13 +4,16 @@ from raycaster import Raycaster
 from map import Map
 import json
 
+TICKS_PER_GAME = 5 * 60 * 30  # 5 Minuten
 FOV_IN_DEGREE = 120
 FOV = math.radians(FOV_IN_DEGREE)
 EPSILON = math.radians(0.001)
+OBSERVER_PW = "wasdwasd1234"
 
 
 class Game(object):
     def __init__(self, parent, players, observers):
+        self.remaining_ticks = TICKS_PER_GAME
         self.players = players
         self.observers = observers
         self.scores = {}
@@ -40,10 +43,18 @@ class Game(object):
         self.scores[name] = self.scores[name] + score
 
     def update(self, events):
+        self.remaining_ticks -= 1
+        if self.remaining_ticks < 0:
+            self.parent.end_game()
+            return
         self.raycaster.update()
 
         for event in events:
             if event["sock"] not in self.players:
+                if "packet" in event and "observer" in event["packet"]:
+                    pw = event["packet"]["observer"]
+                    if pw == OBSERVER_PW:
+                        self.observers.append(event["sock"])
                 continue
             if "disconnected" in event:
                 del self.players[event["sock"]]
@@ -67,13 +78,20 @@ class Game(object):
 
         for sock in self.players:
             key = self.players[sock]
-            sock.send(json.dumps({"gamestate": self.gamestate(self.player_entities[key])}) + "\n")
+            try:
+                sock.send(json.dumps({"gamestate": self.gamestate(self.player_entities[key])}) + "\n")
+            except:
+                del self.players[sock]
 
         for sock in self.observers:
-            sock.send(json.dumps({"gamestate": self.gamestate_full()}) + "\n")
+            try:
+                sock.send(json.dumps({"gamestate": self.gamestate_full()}) + "\n")
+            except:
+                self.observers.remove(sock)
 
     def gamestate(self, player):
-        gamestate = {"player": player.get_state(), "players": [], "projectiles": [], "walls": self.map.get_lines(),
+        gamestate = {"remaining_ticks": self.remaining_ticks, "player": player.get_state(), "players": [],
+                     "projectiles": [], "walls": self.map.get_lines(),
                      "ranking": self.scores}
 
         for key in self.player_entities:
@@ -100,8 +118,8 @@ class Game(object):
         return gamestate
 
     def gamestate_full(self):
-        gamestate = {"players": [], "projectiles": [], "walls": self.map.get_lines(),
-                     "ranking": self.scores}
+        gamestate = {"remaining_ticks": self.remaining_ticks, "players": [], "projectiles": [],
+                     "walls": self.map.get_lines(), "ranking": self.scores}
 
         for key in self.player_entities:
             p = self.player_entities[key]
@@ -113,4 +131,16 @@ class Game(object):
         return gamestate
     
     def quit(self):
-        pass
+        for sock in self.players:
+            try:
+                sock.send("\n")
+                sock.close()
+            except:
+                del self.players[sock]
+
+        for sock in self.observers:
+            try:
+                sock.send("\n")
+                sock.close()
+            except:
+                self.observers.remove(sock)
