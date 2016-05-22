@@ -1,46 +1,79 @@
 import math
+from projectile import Projectile
+import pygame
+import random
 
-PRIMARY_RELOAD = 1 * 60
-SECONDARY_RELOAD = 3 * 60
+PRIMARY_RELOAD = 1 * 30
+SECONDARY_RELOAD = 3 * 30
 
-RESPAWN_TICKS = 10 * 60
+RESPAWN_TICKS = 5 * 30
 
-AIMSPEED_PER_TICK = 0.2
+AIMSPEED_PER_TICK = 0.1
 TURNSPEED_PER_TICK = 0.1
 MOVESPEED_PER_TICK = 1.0
 
+FOV_IN_DEGREE = 120
+FOV = math.radians(FOV_IN_DEGREE)
+
+
 class Player(object):
-    def __init__(self, raycaster):
+    def __init__(self, raycaster, name, game):
+        self.game = game
         self.raycaster = raycaster
-        # TODO clever spawn positions
-        self.pose = {x: 0, y: 0, theta: 0, aim: 0}
-        self.movespeed = 0
-        self.turnspeed = 0
-        self.aimspeed = 0
-        self.shootstate = 0
-        self.health = 100
-        self.respawn = 0
+        self.pose = {"x": 0.0, "y": 0.0, "theta": 0.0, "aim": 0.0}
+        self.name = name
+        self.movespeed = 0.0
+        self.turnspeed = 0.0
+        self.aimspeed = 0.0
+        self.shootstate = 0.0
+        self.health = 100.0
+        self.respawn = 0.0
         
-        self.primary_reload = 0
-        self.secondary_reload = 0
-        
-    def damage(self, damage, dmg_heading):
-        dh = math.abs(self.pose.theta - dmg_heading) / math.pi
+        self.primary_reload = 0.0
+        self.secondary_reload = 0.0
+        self.spawn()
+
+    def get_size(self):
+        return 1.0
+
+    def get_state(self):
+        return {"x": self.pose["x"], "y": self.pose["y"], "theta": self.pose["theta"], "aim": self.pose["aim"],
+                "health": self.health, "shootstate": self.shootstate, "respawn": self.respawn,
+                "reload_primary": self.primary_reload, "reload_secondary": self.secondary_reload, "name": self.name}
+
+    def damage(self, damage, dmg_heading, owner):
+        dh = self.pose["theta"] - dmg_heading
+        while dh <= math.pi:
+            dh += 2* math.pi
+        while dh > math.pi:
+            dh -= 2*math.pi
+        dh = abs(dh) / math.pi
         modifier = (1-dh) * 0.5 + 0.5
         self.health -= damage * modifier
-        
+
+        if self.health <= 0:
+            if owner != self.name:
+                self.game.score(owner, 1)
+            else:
+                self.game.score(owner, -1)
+            self.respawn = RESPAWN_TICKS
+            return
+
+    def spawn(self):
+        self.health = 100.0
+        spawn_x = random.random() * 100 - 50
+        spawn_y = random.random() * 100 - 50
+        d = random.random() * math.pi * 2 - math.pi
+        self.pose = {"x": spawn_x, "y": spawn_y, "theta": d, "aim": d}
+
     def get_pose(self):
-        return {x: self.pose.x, y: self.pose.y, theta: self.pose.theta}
+        return {"x": self.pose["x"], "y": self.pose["y"], "theta": self.pose["theta"]}
         
     def update(self, players, projectiles):
         if self.respawn > 0:
             self.respawn -= 1
             if self.respawn == 0:
-                # TODO Clever spawn positions
-                self.pose = {x: 0, y: 0, theta: 0, aim: 0}
-            return
-        if self.health <= 0:
-            self.respawn = RESPAWN_TICKS
+                self.spawn()
             return
             
         # Handle shooting
@@ -51,50 +84,109 @@ class Player(object):
             self.secondary_reload -= 1
             
         if self.shootstate == 1 and self.primary_reload <= 0:
-            projectiles.append(Projectile(self.raycaster, 1, {x: self.pose.x, y: self.pose.y, theta: self.pose.aim}))
+            projectiles.append(Projectile(self.raycaster, 1, {"x": self.pose["x"], "y": self.pose["y"], "theta": self.pose["aim"]}, self.name))
             self.primary_reload = PRIMARY_RELOAD
             
         if self.shootstate == 2 and self.secondary_reload <= 0:
-            projectiles.append(Projectile(self.raycaster, 2, {x: self.pose.x, y: self.pose.y, theta: self.pose.aim}))
+            projectiles.append(Projectile(self.raycaster, 2, {"x": self.pose["x"], "y": self.pose["y"], "theta": self.pose["aim"]}, self.name))
             self.secondary_reload = SECONDARY_RELOAD
         
         self.shootstate = 0
         
         # Move robot
-        dx = cos(self.pose.theta) * self.movespeed * MOVESPEED_PER_TICK
-        dy = sin(self.pose.theta) * self.movespeed * MOVESPEED_PER_TICK
+        dx = math.cos(self.pose["theta"]) * self.movespeed * MOVESPEED_PER_TICK
+        dy = math.sin(self.pose["theta"]) * self.movespeed * MOVESPEED_PER_TICK
         
         # Check how far the robot can move.
-        tx, ty, obj = self.raycaster.cast({x: self.pose.x, y: self.pose.y, theta: self.pose.theta})
-        dtx = tx - self.pose.x
-        dty = ty - self.pose.y
+        tx, ty, obj = self.raycaster.cast({"x": self.pose["x"], "y": self.pose["y"], "theta": self.pose["theta"]}, self.name)
+
+        # Only if there is an obstacle do something about it...
+        if tx is not None and ty is not None and obj is not None:
+            dtx = tx - self.pose["x"]
+            dty = ty - self.pose["y"]
         
-        # Crop movement if nescesarry
-        if dx > 0 and dx > dtx:
-            dx = dtx
-        if dx < 0 and dx < dtx:
-            dx = dtx
-        if dy > 0 and dy > dty:
-            dy = dty
-        if dy < 0 and dy < dty:
-            dy = dty
+            # Crop movement if nescesarry
+            if dx > 0 and dx > dtx:
+                dx = dtx
+            if dx < 0 and dx < dtx:
+                dx = dtx
+            if dy > 0 and dy > dty:
+                dy = dty
+            if dy < 0 and dy < dty:
+                dy = dty
             
         # Apply motion
-        self.pose.x += dx
-        self.pose.y += dy
-        self.pose.theta += self.turnspeed * TURNSPEED_PER_TICK
-        self.pose.aim += self.aimspeed * AIMSPEED_PER_TICK
-        
-        # Calculate vision
-        
-    def render(self):
+        self.pose["x"] += dx
+        self.pose["y"] += dy
+        self.pose["theta"] += self.turnspeed * TURNSPEED_PER_TICK
+        self.pose["aim"] += self.aimspeed * AIMSPEED_PER_TICK + self.turnspeed * TURNSPEED_PER_TICK
+
+        while self.pose["theta"] <= -math.pi:
+            self.pose["theta"] += 2 * math.pi
+        while self.pose["theta"] > math.pi:
+            self.pose["theta"] -= 2 * math.pi
+
+        while self.pose["aim"] <= -math.pi:
+            self.pose["aim"] += 2 * math.pi
+        while self.pose["aim"] > math.pi:
+            self.pose["aim"] -= 2 * math.pi
+
+    def render(self, screen, width, height, map_size):
+        scale = height / map_size
+
+        tx = int(self.pose["x"] * scale)
+        ty = int((self.pose["y"] + 1.1) * scale)
+        myfont = pygame.font.SysFont("Arial", 12)
+
+        label = myfont.render("(" + str(math.floor(self.health)) + ") " + self.name, 1, (128, 128, 128))
+        if self.respawn > 0:
+            label = myfont.render("(" + str(self.respawn) + ") " + self.name, 1, (128, 128, 128))
+        screen.blit(label, (tx + width // 2 - label.get_width() // 2, -ty + height // 2 - label.get_height()))
+
+        x = int(self.pose["x"] * scale)
+        y = int(self.pose["y"] * scale)
+        pygame.draw.circle(screen, (255, 255, 255), (x + width // 2, -y + height // 2), int(1.0 * scale), 1)
+
+
+
+        pygame.draw.lines(screen, (255, 128, 128), False, [(x + width // 2, -y + height // 2),
+                (x + math.cos(self.pose["aim"]) * scale * 3 + width // 2, -y -math.sin(self.pose["aim"]) * scale * 3 + height // 2)], 5)
+        pygame.draw.lines(screen, (255, 255, 128), False, [(x + width // 2, -y + height // 2),
+                (x + math.cos(self.pose["theta"]) * scale * 5 + width // 2, -y -math.sin(self.pose["theta"]) * scale * 5 + height // 2)], 2)
+
         if self.respawn > 0:
             return
-        # TODO render stuff
+
+        tx, ty, _ = self.raycaster.cast(
+            {"x": self.pose["x"], "y": self.pose["y"], "theta": self.pose["aim"]}, self.name)
+        if tx is not None and ty is not None:
+            x0 = x + width // 2
+            y0 = - y + height // 2
+            x1 = int(tx * scale) + width // 2
+            y1 = - int(ty * scale) + height // 2
+            pygame.draw.lines(screen, (255, 128, 128), False, [(x0, y0), (x1, y1)], 1)
+
+        tx, ty, _ = self.raycaster.cast(
+            {"x": self.pose["x"], "y": self.pose["y"], "theta": self.pose["aim"] + FOV / 2}, self.name)
+        if tx is not None and ty is not None:
+            x0 = x + width // 2
+            y0 = - y + height // 2
+            x1 = int(tx * scale) + width // 2
+            y1 = - int(ty * scale) + height // 2
+            pygame.draw.lines(screen, (128, 128, 255), False, [(x0, y0), (x1, y1)], 1)
+
+        tx, ty, _ = self.raycaster.cast(
+            {"x": self.pose["x"], "y": self.pose["y"], "theta": self.pose["aim"] - FOV / 2}, self.name)
+        if tx is not None and ty is not None:
+            x0 = x + width // 2
+            y0 = - y + height // 2
+            x1 = int(tx * scale) + width // 2
+            y1 = - int(ty * scale) + height // 2
+            pygame.draw.lines(screen, (128, 128, 255), False, [(x0, y0), (x1, y1)], 1)
         
     def speed(self, movespeed):
-        if movespeed < -0.5:
-            movespeed = -0.5
+        if movespeed < 0:
+            movespeed = 0
         if movespeed > 1:
             movespeed = 1
         self.movespeed = movespeed
@@ -115,4 +207,3 @@ class Player(object):
     
     def shoot(self, cannon):
         self.shootstate = cannon
-    

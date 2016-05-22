@@ -5,7 +5,7 @@ from game.game import Game
 from network import Network
 
 HOST = "0.0.0.0"
-PORT = 1337
+PORT = 2016
 
 class GameManager(object):
     def __init__(self):
@@ -26,14 +26,17 @@ class GameManager(object):
     def end_game(self):
         self.state.quit()
         self.state = Lobby(self)
-    
+
+    def select_player(self, number):
+        self.state.select_player(number)
+
     def update(self):
         events = self.events
         self.events = []
         self.state.update(events)
      
-    def render(self):
-        self.state.render()
+    def render(self, screen, width, height):
+        self.state.render(screen, width, height)
     
     def quit(self):
         self.network.quit()

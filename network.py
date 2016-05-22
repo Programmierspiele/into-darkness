@@ -6,6 +6,7 @@ from threading import Thread
 class Network(object):
     def __init__(self, host, port, parent):
         self.server = socket.socket()
+        self.server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.server.bind((host, port))
         self.server.listen(5)
         self.parent = parent
@@ -34,7 +35,7 @@ class Network(object):
             try:
                 line = sf.readline().rstrip('\n')
                 event = {"packet": json.loads(line), "sock": sock}
-                self.server.add_event(event)
+                self.parent.add_event(event)
             except:
                 print("Unexpected error:", sys.exc_info()[0])
                 break
@@ -43,7 +44,7 @@ class Network(object):
         except:
             print("Cannot close socket.", sys.exc_info()[0])
         
-        self.server.add_event({"disconnected": True, "sock": sock})
+        self.parent.add_event({"disconnected": True, "sock": sock})
         self.connections.remove(sock)
         
     def quit(self):
