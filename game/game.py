@@ -1,10 +1,8 @@
-import pygame
 import math
 from player import Player
 from raycaster import Raycaster
 from map import Map
 import json
-import operator
 
 FOV_IN_DEGREE = 120
 FOV = math.radians(FOV_IN_DEGREE)
@@ -12,8 +10,9 @@ EPSILON = math.radians(0.001)
 
 
 class Game(object):
-    def __init__(self, parent, players):
+    def __init__(self, parent, players, observers):
         self.players = players
+        self.observers = observers
         self.scores = {}
         self.player_entities = {}
         self.map = Map(len(self.players))
@@ -41,6 +40,8 @@ class Game(object):
         self.scores[name] = self.scores[name] + score
 
     def update(self, events):
+        self.raycaster.update()
+
         for event in events:
             if event["sock"] not in self.players:
                 continue
@@ -63,11 +64,13 @@ class Game(object):
             self.player_entities[key].update(self.player_entities, self.projectile_entities)
         for projectile in self.projectile_entities:
             projectile.update(self.player_entities, self.projectile_entities)
-        #self.parent.end_game()
 
         for sock in self.players:
             key = self.players[sock]
             sock.send(json.dumps({"gamestate": self.gamestate(self.player_entities[key])}) + "\n")
+
+        for sock in self.observers:
+            sock.send(json.dumps({"gamestate": self.gamestate_full()}) + "\n")
 
     def gamestate(self, player):
         gamestate = {"player": player.get_state(), "players": [], "projectiles": [], "walls": self.map.get_lines(),
@@ -81,9 +84,9 @@ class Game(object):
             d = math.atan2(dy, dx)
             dth = d - player.pose["aim"]
             while dth > math.pi:
-                dth -= 2*math.pi
+                dth -= 2 * math.pi
             while dth < -math.pi:
-                dth += 2*math.pi
+                dth += 2 * math.pi
 
             if abs(dth) > FOV / 2.0:
                 continue
@@ -96,89 +99,18 @@ class Game(object):
 
         return gamestate
 
-    def render_vision(self, player, screen, width, height, map_size, detail_reduction):
-        if player.respawn > 0:
-            return
+    def gamestate_full(self):
+        gamestate = {"players": [], "projectiles": [], "walls": self.map.get_lines(),
+                     "ranking": self.scores}
 
-        scale = height / map_size
-
-        x = int(player.pose["x"] * scale)
-        y = int(player.pose["y"] * scale)
-        offset_x = width // 2
-        offset_y = height // 2
-
-        points = [(x + offset_x, -y + offset_y)]
-        helper_points = []
-
-        lines = self.raycaster.get_lines()
-
-        tx, ty, _ = self.raycaster.cast(
-            {"x": player.pose["x"], "y": player.pose["y"], "theta": player.pose["aim"] - FOV / 2}, player.name)
-        if tx is not None:
-            points.append((int(tx * scale) + offset_x, - int(ty * scale) + offset_y))
-        for line in lines:
-            for i in range(2):
-                p = line[i]
-                dx = p["x"] - player.pose["x"]
-                dy = p["y"] - player.pose["y"]
-                d = math.atan2(dy, dx)
-                dth = d - player.pose["aim"]
-                while dth > math.pi:
-                    dth -= 2 * math.pi
-                while dth < -math.pi:
-                    dth += 2 * math.pi
-
-                if abs(dth) > FOV / 2.0:
-                    continue
-
-                for j in range(3):
-                    tx, ty, _ = self.raycaster.cast(
-                        {"x": player.pose["x"], "y": player.pose["y"], "theta": d + (j-1) * EPSILON}, player.name)
-                    if tx is not None and ty is not None:
-                        helper_points.append((int(tx * scale) + offset_x, - int(ty * scale) + offset_y,
-                                              dth + (j-1) * EPSILON))
-
-        helper_points = sorted(helper_points, key=lambda tup: tup[2])
-        for i in range(len(helper_points)):
-            points.append((helper_points[i][0], helper_points[i][1]))
-
-        tx, ty, _ = self.raycaster.cast(
-            {"x": player.pose["x"], "y": player.pose["y"], "theta": player.pose["aim"] + FOV / 2}, player.name)
-        if tx is not None:
-            points.append((int(tx * scale) + offset_x, - int(ty * scale) + offset_y))
-
-        if len(points) > 2:
-            s = pygame.Surface((width, height), pygame.SRCALPHA)  # per-pixel alpha
-            pygame.draw.polygon(s, (250, 250, 200, 128), points, 0)
-            screen.blit(s, (0, 0))
-
-    def render(self, screen, width, height):
-        self.raycaster.update()
-        map_size = self.map.get_map_size() + 1.0
-
-        if self.selected_player is not None:
-            self.render_vision(self.selected_player, screen, width, height, map_size, 1)
-        else:
-            for p in self.player_entities:
-                player = self.player_entities[p]
-                self.render_vision(player, screen, width, height, map_size, len(self.player_entities))
-
-        self.map.render(screen, width, height, map_size)
         for key in self.player_entities:
-            self.player_entities[key].render(screen, width, height, map_size)
-        for projectile in self.projectile_entities:
-            projectile.render(screen, width, height, map_size)
+            p = self.player_entities[key]
+            gamestate["players"].append(p.get_state())
 
-        myfont = pygame.font.SysFont("Arial", 32)
-        label = myfont.render("Ranking", 1, (255, 255, 255))
-        screen.blit(label, (10, 10))
-        myfont = pygame.font.SysFont("Arial", 16)
-        i = 2
-        sorted_x = sorted(self.scores.items(), key=operator.itemgetter(1), reverse=True)
-        for key, value in sorted_x:
-            label = myfont.render(key + ": " + str(value), 1, (255, 255, 255))
-            screen.blit(label, (10, 10 + label.get_height() * 1.1 * i))
-            i += 1
+        for projectile in self.projectile_entities:
+            gamestate["projectiles"].append(projectile.get_state())
+
+        return gamestate
     
     def quit(self):
         pass

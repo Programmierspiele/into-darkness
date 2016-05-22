@@ -3,6 +3,7 @@ import json
 import sys
 from threading import Thread
 
+
 class Network(object):
     def __init__(self, host, port, parent):
         self.server = socket.socket()

@@ -1,5 +1,4 @@
 import math
-import pygame
 
 SECONDARY_RADIUS = 10
 PRIMARY_ANIMATION_TIME = 0.1 * 30
@@ -82,18 +81,3 @@ class Projectile(object):
                     if dist < 0.001:
                         dtheta = 0
                     p.damage(self.damage * SECONDARY_RADIUS / dist, dtheta, self.owner)
-    
-    def render(self, screen, width, height, map_size):
-        scale = height / map_size
-
-        x = int(self.pose["x"] * scale)
-        y = int(self.pose["y"] * scale)
-        pygame.draw.circle(screen, (255, 255, 255), (x + width // 2, -y + height // 2), max(1, int(0.3 * scale)), 1)
-
-        if self.dead > 0:
-            if self.type == 2:
-                pygame.draw.circle(screen, (255, 180, 100), (x + width // 2, -y + height // 2),
-                                   max(1, int(self.dead * scale)), max(1, int(self.dead * scale)))
-            else:
-                pygame.draw.circle(screen, (255, 100, 100), (x + width // 2, -y + height // 2),
-                                   max(1, int(self.dead * scale)), max(1, int(self.dead * scale)))

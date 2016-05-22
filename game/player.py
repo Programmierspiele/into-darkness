@@ -1,6 +1,5 @@
 import math
 from projectile import Projectile
-import pygame
 import random
 
 PRIMARY_RELOAD = 1 * 30
@@ -155,57 +154,6 @@ class Player(object):
             self.pose["aim"] += 2 * math.pi
         while self.pose["aim"] > math.pi:
             self.pose["aim"] -= 2 * math.pi
-
-    def render(self, screen, width, height, map_size):
-        scale = height / map_size
-
-        tx = int(self.pose["x"] * scale)
-        ty = int((self.pose["y"] + 1.1) * scale)
-        myfont = pygame.font.SysFont("Arial", 12)
-
-        label = myfont.render("(" + str(math.floor(self.health)) + ") " + self.name, 1, (128, 128, 128))
-        if self.respawn > 0:
-            label = myfont.render("(" + str(self.respawn) + ") " + self.name, 1, (128, 128, 128))
-        screen.blit(label, (tx + width // 2 - label.get_width() // 2, -ty + height // 2 - label.get_height()))
-
-        x = int(self.pose["x"] * scale)
-        y = int(self.pose["y"] * scale)
-        pygame.draw.circle(screen, (255, 255, 255), (x + width // 2, -y + height // 2), max(1, int(1.0 * scale)), 1)
-
-        pygame.draw.lines(screen, (255, 128, 128), False, [(x + width // 2, -y + height // 2),
-                (x + math.cos(self.pose["aim"]) * scale * 3 + width // 2, -y -math.sin(self.pose["aim"]) * scale * 3 + height // 2)], 5)
-        pygame.draw.lines(screen, (255, 255, 128), False, [(x + width // 2, -y + height // 2),
-                (x + math.cos(self.pose["theta"]) * scale * 5 + width // 2, -y -math.sin(self.pose["theta"]) * scale * 5 + height // 2)], 2)
-
-        if self.respawn > 0:
-            return
-
-        tx, ty, _ = self.raycaster.cast(
-            {"x": self.pose["x"], "y": self.pose["y"], "theta": self.pose["aim"]}, self.name)
-        if tx is not None and ty is not None:
-            x0 = x + width // 2
-            y0 = - y + height // 2
-            x1 = int(tx * scale) + width // 2
-            y1 = - int(ty * scale) + height // 2
-            pygame.draw.lines(screen, (255, 128, 128), False, [(x0, y0), (x1, y1)], 1)
-
-        tx, ty, _ = self.raycaster.cast(
-            {"x": self.pose["x"], "y": self.pose["y"], "theta": self.pose["aim"] - self.bloom}, self.name)
-        if tx is not None and ty is not None:
-            x0 = x + width // 2
-            y0 = - y + height // 2
-            x1 = int(tx * scale) + width // 2
-            y1 = - int(ty * scale) + height // 2
-            pygame.draw.lines(screen, (255, 200, 128), False, [(x0, y0), (x1, y1)], 1)
-
-        tx, ty, _ = self.raycaster.cast(
-            {"x": self.pose["x"], "y": self.pose["y"], "theta": self.pose["aim"] + self.bloom}, self.name)
-        if tx is not None and ty is not None:
-            x0 = x + width // 2
-            y0 = - y + height // 2
-            x1 = int(tx * scale) + width // 2
-            y1 = - int(ty * scale) + height // 2
-            pygame.draw.lines(screen, (255, 200, 128), False, [(x0, y0), (x1, y1)], 1)
         
     def speed(self, movespeed):
         if movespeed < 0:
