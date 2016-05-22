@@ -23,15 +23,6 @@ class Player(object):
     def render(player, raycaster, screen, width, height, map_size):
         scale = height / map_size
 
-        tx = int(player["x"] * scale)
-        ty = int((player["y"] + 1.1) * scale)
-        myfont = pygame.font.SysFont("Arial", 12)
-
-        label = myfont.render("(" + str(math.floor(player["health"])) + ") " + player["name"], 1, (128, 128, 128))
-        if player["respawn"] > 0:
-            label = myfont.render("(" + str(player["respawn"]) + ") " + player["name"], 1, (128, 128, 128))
-        screen.blit(label, (tx + width // 2 - label.get_width() // 2, -ty + height // 2 - label.get_height()))
-
         x = int(player["x"] * scale)
         y = int(player["y"] * scale)
         pygame.draw.circle(screen, (255, 255, 255), (x + width // 2, -y + height // 2), max(1, int(1.0 * scale)), 1)
@@ -70,3 +61,19 @@ class Player(object):
             x1 = int(tx * scale) + width // 2
             y1 = - int(ty * scale) + height // 2
             pygame.draw.lines(screen, (255, 200, 128), False, [(x0, y0), (x1, y1)], 1)
+
+    @staticmethod
+    def render_font(player, screen, width, height, map_size):
+        scale = height / map_size
+
+        tx = int(player["x"] * scale)
+        ty = int((player["y"] + 1.1) * scale)
+        myfont = pygame.font.SysFont("Arial", 12)
+
+        label = myfont.render("(" + str(math.floor(player["health"])) + ") " + player["name"], 1, (128, 128, 128))
+        if player["respawn"] > 0:
+            label = myfont.render("(" + str(player["respawn"]) + ") " + player["name"], 1, (128, 128, 128))
+        s = pygame.Surface((label.get_width() + 4, label.get_height() + 4), pygame.SRCALPHA)  # per-pixel alpha
+        s.fill((45, 45, 45, 200))
+        screen.blit(s, (tx + width // 2 - label.get_width() // 2 - 2, -ty + height // 2 - label.get_height() - 2))
+        screen.blit(label, (tx + width // 2 - label.get_width() // 2, -ty + height // 2 - label.get_height()))

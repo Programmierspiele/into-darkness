@@ -90,6 +90,8 @@ class Game(object):
             Player.render(p, raycaster, screen, width, height, map_size)
         for projectile in gamestate["projectiles"]:
             Projectile.render(projectile, screen, width, height, map_size)
+        for p in gamestate["players"]:
+            Player.render_font(p, screen, width, height, map_size)
 
 
         myfont = pygame.font.SysFont("Arial", 22)
