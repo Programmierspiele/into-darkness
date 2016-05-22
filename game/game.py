@@ -8,6 +8,7 @@ import operator
 
 FOV_IN_DEGREE = 120
 FOV = math.radians(FOV_IN_DEGREE)
+EPSILON = math.radians(0.001)
 
 
 class Game(object):
@@ -57,7 +58,7 @@ class Game(object):
                     player.aim(packet["aim"])
                 if "shoot" in packet:
                     player.shoot(packet["shoot"])
-                
+
         for key in self.player_entities:
             self.player_entities[key].update(self.player_entities, self.projectile_entities)
         for projectile in self.projectile_entities:
@@ -95,7 +96,7 @@ class Game(object):
 
         return gamestate
 
-    def render_vision(self, player, screen, width, height, map_size):
+    def render_vision(self, player, screen, width, height, map_size, detail_reduction):
         if player.respawn > 0:
             return
 
@@ -103,25 +104,65 @@ class Game(object):
 
         x = int(player.pose["x"] * scale)
         y = int(player.pose["y"] * scale)
-        dx = width // 2
-        dy = height // 2
+        offset_x = width // 2
+        offset_y = height // 2
 
-        points = [(x + dx, -y + dy)]
+        points = [(x + offset_x, -y + offset_y)]
+        helper_points = []
 
-        measures = FOV_IN_DEGREE * 2
-        for i in range(measures):
-            d = ((i+1) * 1.0 / measures) * FOV - 0.5 * FOV
-            tx, ty, _ = self.raycaster.cast({"x": player.pose["x"], "y": player.pose["y"], "theta": player.pose["aim"] + d}, player.name)
-            if tx is not None and ty is not None:
-                points.append((tx * scale + dx, -ty * scale + dy))
+        lines = self.raycaster.get_lines()
+
+        tx, ty, _ = self.raycaster.cast(
+            {"x": player.pose["x"], "y": player.pose["y"], "theta": player.pose["aim"] - FOV / 2}, player.name)
+        if tx is not None:
+            points.append((int(tx * scale) + offset_x, - int(ty * scale) + offset_y))
+        for line in lines:
+            for i in range(2):
+                p = line[i]
+                dx = p["x"] - player.pose["x"]
+                dy = p["y"] - player.pose["y"]
+                d = math.atan2(dy, dx)
+                dth = d - player.pose["aim"]
+                while dth > math.pi:
+                    dth -= 2 * math.pi
+                while dth < -math.pi:
+                    dth += 2 * math.pi
+
+                if abs(dth) > FOV / 2.0:
+                    continue
+
+                for j in range(3):
+                    tx, ty, _ = self.raycaster.cast(
+                        {"x": player.pose["x"], "y": player.pose["y"], "theta": d + (j-1) * EPSILON}, player.name)
+                    if tx is not None and ty is not None:
+                        helper_points.append((int(tx * scale) + offset_x, - int(ty * scale) + offset_y,
+                                              dth + (j-1) * EPSILON))
+
+        helper_points = sorted(helper_points, key=lambda tup: tup[2])
+        for i in range(len(helper_points)):
+            points.append((helper_points[i][0], helper_points[i][1]))
+
+        tx, ty, _ = self.raycaster.cast(
+            {"x": player.pose["x"], "y": player.pose["y"], "theta": player.pose["aim"] + FOV / 2}, player.name)
+        if tx is not None:
+            points.append((int(tx * scale) + offset_x, - int(ty * scale) + offset_y))
 
         if len(points) > 2:
-            pygame.draw.polygon(screen, (200, 200, 200), points, 0)
+            s = pygame.Surface((width, height), pygame.SRCALPHA)  # per-pixel alpha
+            pygame.draw.polygon(s, (250, 250, 200, 128), points, 0)
+            screen.blit(s, (0, 0))
 
     def render(self, screen, width, height):
+        self.raycaster.update()
         map_size = self.map.get_map_size() + 1.0
+
         if self.selected_player is not None:
-            self.render_vision(self.selected_player, screen, width, height, map_size)
+            self.render_vision(self.selected_player, screen, width, height, map_size, 1)
+        else:
+            for p in self.player_entities:
+                player = self.player_entities[p]
+                self.render_vision(player, screen, width, height, map_size, len(self.player_entities))
+
         self.map.render(screen, width, height, map_size)
         for key in self.player_entities:
             self.player_entities[key].render(screen, width, height, map_size)

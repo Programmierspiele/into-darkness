@@ -4,10 +4,8 @@ import math
 class Map(object):
     def __init__(self, playercount):
         # TODO Load map dependant on playercount
-        self.lines = [[{"x": -50.0, "y": -50.0}, {"x":  50.0, "y": -50.0}],
-                      [{"x":  50.0, "y": -50.0}, {"x":  50.0, "y":  50.0}],
-                      [{"x":  50.0, "y":  50.0}, {"x": -50.0, "y":  50.0}],
-                      [{"x": -50.0, "y":  50.0}, {"x": -50.0, "y": -50.0}]]
+        self.lines = []
+        self.create_rect(0, 0, 200, 200, math.radians(20))
         self.create_rect(15, 15, 20, 5, math.radians(30))
         self.create_rect(1.9, 2.8, 22, 5, math.radians(55))
         self.create_rect(-5, -15, 20, 5, math.radians(90))
@@ -48,4 +46,4 @@ class Map(object):
             y0 = - int(line[0]["y"] * scale) + height // 2
             x1 = int(line[1]["x"] * scale) + width // 2
             y1 = - int(line[1]["y"] * scale) + height // 2
-            pygame.draw.lines(screen, (128, 255, 128), False, [(x0, y0), (x1, y1)], 2)
+            pygame.draw.lines(screen, (200, 200, 200), False, [(x0, y0), (x1, y1)], 2)

@@ -15,7 +15,7 @@ class Projectile(object):
         self.owner = owner
         self.dead = 0
         
-        self.speed = 1000
+        self.speed = 10
         if type == 2:
             self.speed = 2 # 4 times quicker than a player
 
@@ -37,6 +37,9 @@ class Projectile(object):
         
         # Check how far the robot can move.
         tx, ty, obj = self.raycaster.cast({"x": self.pose["x"], "y": self.pose["y"], "theta": self.pose["theta"]}, self.owner)
+        if tx is None:
+            projectiles.remove(self)
+            return
         dtx = tx - self.pose["x"]
         dty = ty - self.pose["y"]
         
@@ -85,12 +88,12 @@ class Projectile(object):
 
         x = int(self.pose["x"] * scale)
         y = int(self.pose["y"] * scale)
-        pygame.draw.circle(screen, (255, 255, 255), (x + width // 2, -y + height // 2), int(0.3 * scale), 1)
+        pygame.draw.circle(screen, (255, 255, 255), (x + width // 2, -y + height // 2), max(1, int(0.3 * scale)), 1)
 
         if self.dead > 0:
             if self.type == 2:
                 pygame.draw.circle(screen, (255, 180, 100), (x + width // 2, -y + height // 2),
-                               int(self.dead * scale), int(self.dead * scale))
+                                   max(1, int(self.dead * scale)), max(1, int(self.dead * scale)))
             else:
                 pygame.draw.circle(screen, (255, 100, 100), (x + width // 2, -y + height // 2),
-                               int(self.dead * scale), int(self.dead * scale))
+                                   max(1, int(self.dead * scale)), max(1, int(self.dead * scale)))

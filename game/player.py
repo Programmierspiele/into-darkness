@@ -4,7 +4,13 @@ import pygame
 import random
 
 PRIMARY_RELOAD = 1 * 30
-SECONDARY_RELOAD = 3 * 30
+SECONDARY_RELOAD = 3 * PRIMARY_RELOAD
+
+BLOOM_MAX = math.radians(20)
+BLOOM_MIN = math.radians(0.5)
+BLOOM_DECAY = math.radians(20) / SECONDARY_RELOAD
+BLOOM_PRIMARY = BLOOM_MAX / (SECONDARY_RELOAD / PRIMARY_RELOAD)
+BLOOM_SECONDARY = BLOOM_MAX
 
 RESPAWN_TICKS = 5 * 30
 
@@ -28,6 +34,7 @@ class Player(object):
         self.shootstate = 0.0
         self.health = 100.0
         self.respawn = 0.0
+        self.bloom = BLOOM_MIN
         
         self.primary_reload = 0.0
         self.secondary_reload = 0.0
@@ -39,14 +46,15 @@ class Player(object):
     def get_state(self):
         return {"x": self.pose["x"], "y": self.pose["y"], "theta": self.pose["theta"], "aim": self.pose["aim"],
                 "health": self.health, "shootstate": self.shootstate, "respawn": self.respawn,
-                "reload_primary": self.primary_reload, "reload_secondary": self.secondary_reload, "name": self.name}
+                "reload_primary": self.primary_reload, "reload_secondary": self.secondary_reload, "name": self.name,
+                "movespeed": self.movespeed, "turnspeed": self.turnspeed, "aimspeed": self.aimspeed}
 
     def damage(self, damage, dmg_heading, owner):
         dh = self.pose["theta"] - dmg_heading
         while dh <= math.pi:
-            dh += 2* math.pi
+            dh += 2 * math.pi
         while dh > math.pi:
-            dh -= 2*math.pi
+            dh -= 2 * math.pi
         dh = abs(dh) / math.pi
         modifier = (1-dh) * 0.5 + 0.5
         self.health -= damage * modifier
@@ -75,6 +83,11 @@ class Player(object):
             if self.respawn == 0:
                 self.spawn()
             return
+
+        if self.health <= 0:
+            self.game.score(self.name, -1)
+            self.respawn = RESPAWN_TICKS
+            return
             
         # Handle shooting
         if self.primary_reload > 0:
@@ -84,12 +97,20 @@ class Player(object):
             self.secondary_reload -= 1
             
         if self.shootstate == 1 and self.primary_reload <= 0:
-            projectiles.append(Projectile(self.raycaster, 1, {"x": self.pose["x"], "y": self.pose["y"], "theta": self.pose["aim"]}, self.name))
+            berr = random.random() * self.bloom * 2 - self.bloom
+            projectiles.append(Projectile(self.raycaster, 1, {"x": self.pose["x"], "y": self.pose["y"], "theta": self.pose["aim"] + berr}, self.name))
             self.primary_reload = PRIMARY_RELOAD
+            self.bloom += BLOOM_PRIMARY
             
         if self.shootstate == 2 and self.secondary_reload <= 0:
-            projectiles.append(Projectile(self.raycaster, 2, {"x": self.pose["x"], "y": self.pose["y"], "theta": self.pose["aim"]}, self.name))
+            berr = random.random() * self.bloom * 2 - self.bloom
+            projectiles.append(Projectile(self.raycaster, 2, {"x": self.pose["x"], "y": self.pose["y"], "theta": self.pose["aim"] + berr}, self.name))
             self.secondary_reload = SECONDARY_RELOAD
+            self.bloom += BLOOM_SECONDARY
+
+        self.bloom = min(BLOOM_MAX, self.bloom)
+        self.bloom -= BLOOM_DECAY * (1.0-abs(self.movespeed))
+        self.bloom = max(0, self.bloom)
         
         self.shootstate = 0
         
@@ -106,14 +127,18 @@ class Player(object):
             dty = ty - self.pose["y"]
         
             # Crop movement if nescesarry
-            if dx > 0 and dx > dtx:
-                dx = dtx
-            if dx < 0 and dx < dtx:
-                dx = dtx
-            if dy > 0 and dy > dty:
-                dy = dty
-            if dy < 0 and dy < dty:
-                dy = dty
+            if dx > 0 and dx > dtx - self.get_size() / 2:
+                dx = 0
+                dy = 0
+            elif dx < 0 and dx < dtx + self.get_size() / 2:
+                dx = 0
+                dy = 0
+            if dy > 0 and dy > dty - self.get_size() / 2:
+                dx = 0
+                dy = 0
+            elif dy < 0 and dy < dty + self.get_size() / 2:
+                dx = 0
+                dy = 0
             
         # Apply motion
         self.pose["x"] += dx
@@ -145,9 +170,7 @@ class Player(object):
 
         x = int(self.pose["x"] * scale)
         y = int(self.pose["y"] * scale)
-        pygame.draw.circle(screen, (255, 255, 255), (x + width // 2, -y + height // 2), int(1.0 * scale), 1)
-
-
+        pygame.draw.circle(screen, (255, 255, 255), (x + width // 2, -y + height // 2), max(1, int(1.0 * scale)), 1)
 
         pygame.draw.lines(screen, (255, 128, 128), False, [(x + width // 2, -y + height // 2),
                 (x + math.cos(self.pose["aim"]) * scale * 3 + width // 2, -y -math.sin(self.pose["aim"]) * scale * 3 + height // 2)], 5)
@@ -167,22 +190,22 @@ class Player(object):
             pygame.draw.lines(screen, (255, 128, 128), False, [(x0, y0), (x1, y1)], 1)
 
         tx, ty, _ = self.raycaster.cast(
-            {"x": self.pose["x"], "y": self.pose["y"], "theta": self.pose["aim"] + FOV / 2}, self.name)
+            {"x": self.pose["x"], "y": self.pose["y"], "theta": self.pose["aim"] - self.bloom}, self.name)
         if tx is not None and ty is not None:
             x0 = x + width // 2
             y0 = - y + height // 2
             x1 = int(tx * scale) + width // 2
             y1 = - int(ty * scale) + height // 2
-            pygame.draw.lines(screen, (128, 128, 255), False, [(x0, y0), (x1, y1)], 1)
+            pygame.draw.lines(screen, (255, 200, 128), False, [(x0, y0), (x1, y1)], 1)
 
         tx, ty, _ = self.raycaster.cast(
-            {"x": self.pose["x"], "y": self.pose["y"], "theta": self.pose["aim"] - FOV / 2}, self.name)
+            {"x": self.pose["x"], "y": self.pose["y"], "theta": self.pose["aim"] + self.bloom}, self.name)
         if tx is not None and ty is not None:
             x0 = x + width // 2
             y0 = - y + height // 2
             x1 = int(tx * scale) + width // 2
             y1 = - int(ty * scale) + height // 2
-            pygame.draw.lines(screen, (128, 128, 255), False, [(x0, y0), (x1, y1)], 1)
+            pygame.draw.lines(screen, (255, 200, 128), False, [(x0, y0), (x1, y1)], 1)
         
     def speed(self, movespeed):
         if movespeed < 0:

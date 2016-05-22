@@ -9,7 +9,7 @@ Tanks can only see what is roughly in the direction they are aiming.
 They get clustered distance readings with meta information to see their environment.
 The metainformation for players would be the name and the direction and heading, whereas they cannot be extracted from distance readings.
 
-TODO Image
+![Image of the game](https://raw.githubusercontent.com/penguinmenac3/into-darkness/master/into-darkness.png)
 
 ## Hackathon
 
