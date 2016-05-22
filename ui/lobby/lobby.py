@@ -15,7 +15,7 @@ class Lobby(object):
         centerX = width // 2
 
         myfont = pygame.font.SysFont("Arial", 76)
-        label = myfont.render("Lobby", 1, (255, 255, 255))
+        label = myfont.render("Into Darkness", 1, (255, 255, 255))
         screen.blit(label, (centerX - label.get_width() // 2, height // 4 - label.get_height() // 2))
 
         myfont = pygame.font.SysFont("Arial", 56)

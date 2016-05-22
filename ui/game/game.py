@@ -93,8 +93,21 @@ class Game(object):
 
 
         myfont = pygame.font.SysFont("Arial", 22)
-        label = myfont.render("Time: " + str(gamestate["remaining_ticks"]), 1, (255, 255, 255))
+        label = myfont.render("Ticks remaining: " + str(gamestate["remaining_ticks"]), 1, (255, 255, 255))
+        s = pygame.Surface((label.get_width() + 20, label.get_height() + 20), pygame.SRCALPHA)  # per-pixel alpha
+        s.fill((45, 45, 45, 200))
+        screen.blit(s, (width // 2 - label.get_width() // 2 - 10, 0))
         screen.blit(label, (width // 2 - label.get_width() // 2, 10))
+
+        myfont = pygame.font.SysFont("Arial", 16)
+        label = myfont.render("test", 1, (255, 255, 255))
+        line_height = label.get_height()
+        myfont = pygame.font.SysFont("Arial", 32)
+        label = myfont.render("Ranking-----", 1, (255, 255, 255))
+        line_width = label.get_width()
+        s = pygame.Surface((line_width + 20, line_height * (len(gamestate["ranking"]) + 2) + 40), pygame.SRCALPHA)  # per-pixel alpha
+        s.fill((45, 45, 45, 200))
+        screen.blit(s, (0, 0))
 
         myfont = pygame.font.SysFont("Arial", 32)
         label = myfont.render("Ranking", 1, (255, 255, 255))
