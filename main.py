@@ -4,14 +4,18 @@ import time
 
 FPS = 30
 pw = "wasd"
+port = 2016
 
 if len(sys.argv) == 2:
     pw = sys.argv[1]
+elif len(sys.argv) == 3:
+    pw = sys.argv[1]
+    port = int(sys.argv[2])
 else:
-    print("Usage: python main.py <observer_pw>")
+    print("Usage: python main.py <observer_pw> [port]")
     sys.exit(0)
 
-game = tankgame.GameManager(pw)
+game = tankgame.GameManager(pw, port)
 
 while True:
     start_time = time.time()

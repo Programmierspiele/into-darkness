@@ -3,14 +3,13 @@ from game.game import Game
 from network import Network
 
 HOST = "0.0.0.0"
-PORT = 2016
 
 
 class GameManager(object):
-    def __init__(self, pw):
+    def __init__(self, pw, port):
         self.pw = pw
         self.events = []
-        self.network = Network(HOST, PORT, self)
+        self.network = Network(HOST, port, self)
         self.state = Lobby(self)
         
     def add_event(self, event):

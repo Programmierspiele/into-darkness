@@ -73,7 +73,7 @@ class Game(object):
             screen.blit(s, (0, 0))
 
     @staticmethod
-    def render(screen, width, height, gamestate, selected_id):
+    def render(screen, width, height, gamestate, selected_id, host, port):
         raycaster = Raycaster(gamestate["players"], gamestate["walls"])
         raycaster.update()
         map_size = raycaster.get_map_size() + 1.0
@@ -121,6 +121,13 @@ class Game(object):
             label = myfont.render(key + ": " + str(value), 1, (255, 255, 255))
             screen.blit(label, (10, 10 + label.get_height() * 1.1 * i))
             i += 1
+
+        myfont = pygame.font.SysFont("Arial", 32)
+        label = myfont.render(host + ":" + str(port), 1, (255, 255, 0))
+        s = pygame.Surface((label.get_width() + 20, label.get_height() + 20), pygame.SRCALPHA)  # per-pixel alpha
+        s.fill((45, 45, 45, 200))
+        screen.blit(s, (width // 2 - label.get_width() // 2 - 10, height - label.get_height() - 20))
+        screen.blit(label, (width // 2 - label.get_width() // 2, height - label.get_height() - 10))
     
     def quit(self):
         pass

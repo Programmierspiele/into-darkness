@@ -12,6 +12,7 @@ class GameManager(object):
         self.host = host
         self.port = port
         self.pw = pw
+        self.last_score = None
         
     def add_event(self, event):
         if "disconnected" in event:
@@ -38,9 +39,10 @@ class GameManager(object):
             return
 
         if "gamestate" in self.event:
-            Game.render(screen, width, height, self.event["gamestate"], self.selected_player)
+            self.last_score = self.event["gamestate"]["ranking"]
+            Game.render(screen, width, height, self.event["gamestate"], self.selected_player, self.host, self.port)
         elif "lobby" in self.event:
-            Lobby.render(screen, width, height, self.event["lobby"], self.host, self.port)
+            Lobby.render(screen, width, height, self.event["lobby"], self.host, self.port, self.last_score)
         else:
             print("unknown state")
             print(self.event)
