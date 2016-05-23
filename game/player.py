@@ -69,8 +69,8 @@ class Player(object):
 
     def spawn(self):
         self.health = 100.0
-        spawn_x = random.random() * 100 - 50
-        spawn_y = random.random() * 100 - 50
+        spawn_x = random.random() * self.game.map.get_map_size() - self.game.map.get_map_size() / 2
+        spawn_y = random.random() * self.game.map.get_map_size() - self.game.map.get_map_size() / 2
         d = random.random() * math.pi * 2 - math.pi
         self.pose = {"x": spawn_x, "y": spawn_y, "theta": d, "aim": d}
 

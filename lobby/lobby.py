@@ -38,7 +38,7 @@ class Lobby(object):
                     if pw == self.parent.pw:
                         self.observers.append(event["sock"])
     
-        if len(self.players) > MIN_PLAYERS:
+        if len(self.players) >= MIN_PLAYERS:
           self.timeout -= 1
           if len(self.players) >= MAX_PLAYERS:
             self.timeout = 0
