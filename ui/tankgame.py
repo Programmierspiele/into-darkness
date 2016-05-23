@@ -40,7 +40,7 @@ class GameManager(object):
         if "gamestate" in self.event:
             Game.render(screen, width, height, self.event["gamestate"], self.selected_player)
         elif "lobby" in self.event:
-            Lobby.render(screen, width, height, self.event["lobby"], host, port)
+            Lobby.render(screen, width, height, self.event["lobby"], self.host, self.port)
         else:
             print("unknown state")
             print(self.event)
