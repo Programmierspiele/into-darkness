@@ -25,12 +25,16 @@ class GameManager(object):
     def render(self, screen, width, height):
         if self.network is None:
             try:
-                self.network = Network(host, port, pw, self)
+                self.network = Network(self.host, self.port, self.pw, self)
             except:
                 self.event = None
+                self.network = None
 
-        if self.event is None:
+        if self.event is None and self.network is None:
             NoServer.render(screen, width, height)
+            return
+        if self.event is None:
+            NoServer.render_pw_error(screen, width, height)
             return
 
         if "gamestate" in self.event:
