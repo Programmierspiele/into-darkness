@@ -3,9 +3,24 @@ import ui.tankgame
 import sys
 from math import pi
 
+host = "localhost"
+port = 2016
+pw = "wasd"
+
+if len(sys.argv) == 4:
+    host = sys.argv[1]
+    port = int(sys.argv[2])
+    pw = sys.argv[3]
+elif len(sys.argv) == 3:
+    host = sys.argv[1]
+    pw = sys.argv[2]
+else:
+    print("Usage: python ui.py <host> [port] <password>")
+    sys.exit(0)
+
 TITLE = "Tank Game"
 size = [800, 600]
-game = ui.tankgame.GameManager()
+game = ui.tankgame.GameManager(host, port, pw)
 
 pygame.init()
 infoObject = pygame.display.Info()

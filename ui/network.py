@@ -3,14 +3,12 @@ import json
 import sys
 from threading import Thread
 
-OBSERVER_PW = "wasdwasd1234"
-
 
 class Network(object):
-    def __init__(self, host, port, parent):
+    def __init__(self, host, port, pw, parent):
         self.socket = socket.socket()
         self.socket.connect((host, port))
-        self.socket.send(json.dumps({"observer": OBSERVER_PW}) + "\n")
+        self.socket.send(json.dumps({"observer": pw}) + "\n")
         self.parent = parent
         self.running = True
         self.threads = []

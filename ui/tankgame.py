@@ -3,15 +3,15 @@ from game.game import Game
 from default.noserver import NoServer
 from network import Network
 
-HOST = "localhost"
-PORT = 2016
-
 
 class GameManager(object):
-    def __init__(self):
+    def __init__(self, host, port, pw):
         self.event = None
         self.selected_player = -1
         self.network = None
+        self.host = host
+        self.port = port
+        self.pw = pw
         
     def add_event(self, event):
         if "disconnected" in event:
@@ -25,7 +25,7 @@ class GameManager(object):
     def render(self, screen, width, height):
         if self.network is None:
             try:
-                self.network = Network(HOST, PORT, self)
+                self.network = Network(host, port, pw, self)
             except:
                 self.event = None
 
@@ -36,7 +36,7 @@ class GameManager(object):
         if "gamestate" in self.event:
             Game.render(screen, width, height, self.event["gamestate"], self.selected_player)
         elif "lobby" in self.event:
-            Lobby.render(screen, width, height, self.event["lobby"], HOST, PORT)
+            Lobby.render(screen, width, height, self.event["lobby"], host, port)
         else:
             print("unknown state")
             print(self.event)

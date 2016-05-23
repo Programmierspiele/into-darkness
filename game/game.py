@@ -8,7 +8,6 @@ TICKS_PER_GAME = 5 * 60 * 30  # 5 Minuten
 FOV_IN_DEGREE = 120
 FOV = math.radians(FOV_IN_DEGREE)
 EPSILON = math.radians(0.001)
-OBSERVER_PW = "wasdwasd1234"
 
 
 class Game(object):
@@ -53,7 +52,7 @@ class Game(object):
             if event["sock"] not in self.players:
                 if "packet" in event and "observer" in event["packet"]:
                     pw = event["packet"]["observer"]
-                    if pw == OBSERVER_PW:
+                    if pw == self.parent.pw:
                         self.observers.append(event["sock"])
                 continue
             if "disconnected" in event:

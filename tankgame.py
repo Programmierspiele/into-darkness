@@ -7,7 +7,8 @@ PORT = 2016
 
 
 class GameManager(object):
-    def __init__(self):
+    def __init__(self, pw):
+        self.pw = pw
         self.events = []
         self.network = Network(HOST, PORT, self)
         self.state = Lobby(self)

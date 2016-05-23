@@ -3,7 +3,6 @@ import json
 MIN_PLAYERS = 2
 MAX_PLAYERS = 16
 INIT_TIMEOUT = 30 * 30  # ~ 30 seconds lobby
-OBSERVER_PW = "wasdwasd1234"
 
 
 class Lobby(object):
@@ -36,7 +35,7 @@ class Lobby(object):
                         event["sock"].send(json.dumps({"name": None}) + "\n")
                 if "observer" in event["packet"]:
                     pw = event["packet"]["observer"]
-                    if pw == OBSERVER_PW:
+                    if pw == self.parent.pw:
                         self.observers.append(event["sock"])
     
         if len(self.players) > MIN_PLAYERS:

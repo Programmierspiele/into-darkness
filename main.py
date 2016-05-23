@@ -3,7 +3,15 @@ import sys
 import time
 
 FPS = 30
-game = tankgame.GameManager()
+pw = "wasd"
+
+if len(sys.argv) == 2:
+    pw = sys.argv[1]
+else:
+    print("Usage: python main.py <observer_pw>")
+    sys.exit(0)
+
+game = tankgame.GameManager(pw)
 
 while True:
     start_time = time.time()
