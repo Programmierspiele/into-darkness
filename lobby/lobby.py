@@ -2,7 +2,7 @@ import json
 
 MIN_PLAYERS = 2
 MAX_PLAYERS = 16
-INIT_TIMEOUT = 30 * 30  # ~ 30 seconds lobby
+INIT_TIMEOUT = 1 * 30  # ~ 30 seconds lobby
 
 
 class Lobby(object):
@@ -22,7 +22,6 @@ class Lobby(object):
                 self.names.remove(self.players[event["sock"]])
                 del self.players[event["sock"]]
             if "packet" in event:
-                print(json.dumps(event["packet"]))
                 if "name" in event["packet"]:
                     name = event["packet"]["name"]
                     if name not in self.names:
@@ -48,16 +47,25 @@ class Lobby(object):
         if self.timeout <= 0:
           self.parent.start_game(self.players, self.observers)
 
+        mark_for_deletion = []
         for player in self.players:
             try:
                 player.send(json.dumps({"lobby": {"players": self.names, "timeout": self.timeout}}) + "\n")
             except:
-                del self.players[player]
+                mark_for_deletion.append(player)
+
+        for sock in mark_for_deletion:
+            del self.players[sock]
+
+        mark_for_deletion = []
         for observer in self.observers:
             try:
                 observer.send(json.dumps({"lobby": {"players": self.names, "timeout": self.timeout}}) + "\n")
             except:
-                self.observers.remove(observer)
+                mark_for_deletion.append(observer)
+
+        for sock in mark_for_deletion:
+            self.observers.remove(sock)
     
     def quit(self):
         pass

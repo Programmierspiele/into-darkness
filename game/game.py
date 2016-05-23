@@ -3,6 +3,7 @@ from player import Player
 from raycaster import Raycaster
 from map import Map
 import json
+import time
 
 TICKS_PER_GAME = 5 * 60 * 30  # 5 Minuten
 FOV_IN_DEGREE = 120
@@ -14,6 +15,7 @@ class Game(object):
     def __init__(self, parent, players, observers):
         self.remaining_ticks = TICKS_PER_GAME
         self.players = players
+        self.player_writestreams = {}
         self.observers = observers
         self.scores = {}
         self.player_entities = {}
@@ -26,6 +28,8 @@ class Game(object):
         self.parent = parent
         self.selected_player = None
         self.select_player(0)
+
+        self.last_time = time.time()
 
     def select_player(self, number):
         i = 1
@@ -75,18 +79,38 @@ class Game(object):
         for projectile in self.projectile_entities:
             projectile.update(self.player_entities, self.projectile_entities)
 
+        mark_for_deletion = []
         for sock in self.players:
             key = self.players[sock]
+            if not sock in self.player_writestreams:
+                self.player_writestreams[sock] = sock.makefile(mode='w')
             try:
-                sock.send(json.dumps({"gamestate": self.gamestate(self.player_entities[key])}) + "\n")
+                # seems to be a bit more stable in the actual rate it writes that the sock.send method
+                self.player_writestreams[sock].write(json.dumps({"gamestate": self.gamestate(self.player_entities[key])}))
+                self.player_writestreams[sock].write("\n")
+                self.player_writestreams[sock].flush()
+                #sock.send(json.dumps({"gamestate": self.gamestate(self.player_entities[key])}))
+                #sock.send("\n")
             except:
-                del self.players[sock]
+                mark_for_deletion.append(sock)
 
+        for sock in mark_for_deletion:
+            del self.players[sock]
+
+        mark_for_deletion = []
         for sock in self.observers:
             try:
-                sock.send(json.dumps({"gamestate": self.gamestate_full()}) + "\n")
+                sock.send(json.dumps({"gamestate": self.gamestate_full()}))
+                sock.send("\n")
+                #sock.flush()
             except:
-                self.observers.remove(sock)
+                mark_for_deletion.append(sock)
+
+        for sock in mark_for_deletion:
+            self.observers.remove(sock)
+
+        if len(self.players) == 0:
+            self.parent.end_game()
 
     def gamestate(self, player):
         gamestate = {"remaining_ticks": self.remaining_ticks, "player": player.get_state(), "players": [],

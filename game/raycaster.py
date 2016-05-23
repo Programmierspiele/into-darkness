@@ -51,7 +51,7 @@ class Raycaster(object):
         self.line_intersector = LineIntersector()
 
     def update(self):
-        self.lines = list(self.map.get_lines())
+        self.lines = list(self.map.get_lines_as_rects())
         for player in self.players:
             p = self.players[player]
             x3 = p.get_pose()["x"] - p.get_size() / 2.0

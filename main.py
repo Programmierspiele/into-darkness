@@ -2,7 +2,7 @@ import tankgame
 import sys
 import time
 
-FPS = 30
+TPS = 30
 pw = "wasd"
 port = 2016
 
@@ -17,17 +17,23 @@ else:
 
 game = tankgame.GameManager(pw, port)
 
+start_time = time.time()
 while True:
-    start_time = time.time()
-
     # Update
     game.update()
 
     end_time = time.time()
-    sleep_time = 1.0 / FPS - (end_time-start_time)
-    if sleep_time < 0:
-        print("Error cannot keep up." + str(sleep_time))
-    else:
+    elapsed = end_time-start_time
+    sleep_time = 1.0 / TPS - (elapsed)
+    if sleep_time > 0:
         time.sleep(sleep_time)
+
+    start_time = time.time()
+    if sleep_time < 0:
+        tps = int(10/elapsed) / 10.0
+        if tps < 29:
+            print("Error cannot keep up. " + str(tps) + " TPS")
+        time.sleep(0.00001)
+
 
 sys.exit(0)

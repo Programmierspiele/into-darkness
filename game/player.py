@@ -13,9 +13,9 @@ BLOOM_SECONDARY = BLOOM_MAX
 
 RESPAWN_TICKS = 5 * 30
 
-AIMSPEED_PER_TICK = 0.1
-TURNSPEED_PER_TICK = 0.1
-MOVESPEED_PER_TICK = 1.0
+AIMSPEED_PER_TICK = math.radians(90/30)
+TURNSPEED_PER_TICK = math.radians(90/30)
+MOVESPEED_PER_TICK = 0.2
 
 FOV_IN_DEGREE = 120
 FOV = math.radians(FOV_IN_DEGREE)
@@ -50,6 +50,9 @@ class Player(object):
                 "size": self.get_size(), "bloom": self.bloom}
 
     def damage(self, damage, dmg_heading, owner):
+        if self.health <= 0:
+            return
+
         dh = self.pose["theta"] - dmg_heading
         while dh <= math.pi:
             dh += 2 * math.pi
@@ -119,24 +122,19 @@ class Player(object):
         dy = math.sin(self.pose["theta"]) * self.movespeed * MOVESPEED_PER_TICK
         
         # Check how far the robot can move.
-        tx, ty, obj = self.raycaster.cast({"x": self.pose["x"], "y": self.pose["y"], "theta": self.pose["theta"]}, self.name)
+        if self.movespeed >= 0:
+            tx, ty, obj = self.raycaster.cast({"x": self.pose["x"], "y": self.pose["y"], "theta": self.pose["theta"]}, self.name)
+        else:
+            tx, ty, obj = self.raycaster.cast({"x": self.pose["x"], "y": self.pose["y"], "theta": self.pose["theta"] - math.pi}, self.name)
 
         # Only if there is an obstacle do something about it...
         if tx is not None and ty is not None and obj is not None:
             dtx = tx - self.pose["x"]
             dty = ty - self.pose["y"]
+            dlen = dtx * dtx + dty * dty
         
             # Crop movement if nescesarry
-            if dx > 0 and dx > dtx - self.get_size() / 2:
-                dx = 0
-                dy = 0
-            elif dx < 0 and dx < dtx + self.get_size() / 2:
-                dx = 0
-                dy = 0
-            if dy > 0 and dy > dty - self.get_size() / 2:
-                dx = 0
-                dy = 0
-            elif dy < 0 and dy < dty + self.get_size() / 2:
+            if dlen <= dx * dx + dy * dy * 1.01:
                 dx = 0
                 dy = 0
             
@@ -157,8 +155,8 @@ class Player(object):
             self.pose["aim"] -= 2 * math.pi
         
     def speed(self, movespeed):
-        if movespeed < 0:
-            movespeed = 0
+        if movespeed < -0.5:
+            movespeed = -0.5
         if movespeed > 1:
             movespeed = 1
         self.movespeed = movespeed

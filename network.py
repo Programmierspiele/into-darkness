@@ -23,6 +23,7 @@ class Network(object):
         while self.running:
             #try:
                 (sock, addr) = self.server.accept()
+                sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
                 self.connections.append(sock)
                 t = Thread(target=self.connection, args=(sock,))
                 t.setDaemon(True)
@@ -38,7 +39,7 @@ class Network(object):
                 event = {"packet": json.loads(line), "sock": sock}
                 self.parent.add_event(event)
             except:
-                print("Unexpected error:", sys.exc_info()[0])
+                #print("Unexpected error:", sys.exc_info()[0])
                 break
         try:
             sock.close()

@@ -55,18 +55,29 @@ class Map(object):
                             y = y1
         
         # Create rects
-        self.create_rect(0, 0, intended_map_size + 10, intended_map_size + 10, 0)
+        self.create_rect(self.lines, 0, 0, intended_map_size + 10, intended_map_size + 10, 0)
         #self.create_rect(15, 15, 20, 5, math.radians(30))
         #self.create_rect(1.9, 2.8, 22, 5, math.radians(55))
         #self.create_rect(-5, -15, 20, 5, math.radians(90))
         self.map_size = 0
+        self.lines_as_rects = []
         for line in self.lines:
+            dx = line[0]["x"] - line[1]["x"]
+            dy = line[0]["y"] - line[1]["y"]
+            mx = (line[0]["x"] + line[1]["x"]) / 2
+            my = (line[0]["y"] + line[1]["y"]) / 2
+            mlen = math.sqrt(dx*dx+dy*dy)
+            mtheta = math.atan2(dy, dx)
+            self.create_rect(self.lines_as_rects, mx, my, mlen + 1, 1, mtheta)
             self.map_size = max(self.map_size, 2 * abs(line[0]["x"]))
             self.map_size = max(self.map_size, 2 * abs(line[0]["y"]))
             self.map_size = max(self.map_size, 2 * abs(line[1]["x"]))
             self.map_size = max(self.map_size, 2 * abs(line[1]["y"]))
 
-    def create_rect(self, x, y, width, height, theta):
+    def get_lines_as_rects(self):
+        return self.lines_as_rects
+
+    def create_rect(self, lines, x, y, width, height, theta):
         dx_width = math.cos(theta) * width
         dy_width = math.sin(theta) * width
         dx_height = math.sin(theta) * height
@@ -77,10 +88,10 @@ class Map(object):
         bl = {"x": x + dx_width/2 + dx_height / 2, "y": y - dy_height / 2 + dy_width / 2}
         br = {"x": x - dx_width/2 + dx_height / 2, "y": y - dy_height / 2 - dy_width / 2}
 
-        self.lines.append([ul, ur])
-        self.lines.append([ur, br])
-        self.lines.append([br, bl])
-        self.lines.append([bl, ul])
+        lines.append([ul, ur])
+        lines.append([ur, br])
+        lines.append([br, bl])
+        lines.append([bl, ul])
 
     def get_map_size(self):
         return self.map_size
