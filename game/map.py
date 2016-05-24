@@ -6,11 +6,11 @@ class Map(object):
     def __init__(self, playercount):
         self.lines = []
         intended_map_size = 20 * playercount
-        intended_density = 0.2
-        max_line_len = 2 + intended_map_size / 20
-        min_line_len = 1 + intended_map_size / 100
-        max_line_segment_count = 10
-        min_line_segment_count = 4
+        intended_density = 0.1
+        max_line_len = 2 + intended_map_size / 5
+        min_line_len = 1 + intended_map_size / 10
+        max_line_segment_count = 5
+        min_line_segment_count = 2
         min_dist = max_line_len
         
         self.points = []

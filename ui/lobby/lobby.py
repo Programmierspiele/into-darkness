@@ -1,7 +1,7 @@
 import pygame
 import operator
 
-INIT_TIMEOUT = 30 * 30
+INIT_TIMEOUT = 30 * 15
 
 
 class Lobby(object):

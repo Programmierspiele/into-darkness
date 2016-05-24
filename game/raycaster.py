@@ -2,7 +2,7 @@ from __future__ import division
 import math
 import numpy as np
 
-FAST_MODE = True
+FAST_MODE = False
 
 
 class LineIntersector(object):
