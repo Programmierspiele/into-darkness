@@ -2,6 +2,8 @@ from __future__ import division
 import math
 import numpy as np
 
+FAST_MODE = True
+
 
 class LineIntersector(object):
     def perp(self, a):
@@ -79,7 +81,7 @@ class Raycaster(object):
         closest = None
         closest_obj = None
         lines = self.lines
-        if collision_mode:
+        if collision_mode and not FAST_MODE:
             lines = self.lines_with_rects
         for line in lines:
             if len(line) == 3 and line[2].name == leave_out_player:
