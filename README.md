@@ -26,6 +26,17 @@ Packets:
 }
 ```
 
+(LOBBY) while waiting:
+```json
+{
+    "lobby": 
+    {
+        "players": [STRING],
+        "timeout": INT(0, MAX_TICKS_TO_WAIT)
+    }
+}
+```
+
 (GAME) move:
 ```json
 {
@@ -38,3 +49,67 @@ Packets:
 if an attribute is not set it means no change or with shoot no shooting
 shoot 1 is primary weapon and 2 secondary weapon (0 optional for not shooting)
 turn is mathematical turn direction (positive = left, negative = right)
+
+(GAME) gamestate transmission:
+```json
+{
+    "remaining_ticks": INT(0, MAX_TICKS_TO_PLAY),
+    "player": PLAYER,
+    "players": [PLAYER],
+    "projectiles": [PROJECTILE],
+    "walls": [LINE],
+    "ranking": {name as STRING, score as INT}
+}
+```
+
+(GAME) PLAYER:
+```json
+{
+    "x": FLOAT,
+    "y": FLOAT,
+    "theta": radians as FLOAT,
+    "aim": radians as FLOAT,
+    "health": FLOAT(0,100),
+    "shootstate": INT(0,1,2),
+    "respawn": INT(0, MAX_TICKS_TO_RESPAWN), <- 0 means alive
+    "reload_primary": INT(0, MAX_TICKS_TO_RELOAD), <- 0 means ready
+    "reload_secondary": INT(0, MAX_TICKS_TO_RELOAD), <- 0 means ready
+    "name": STRING,
+    "movespeed": FLOAT,
+    "turnspeed": FLOAT,
+    "aimspeed": FLOAT,
+    "size": FLOAT(1.0), <- 1 but may change due to balancing
+    "bloom": radians as FLOAT
+}
+```
+
+(GAME) PROJECTILE:
+```json
+{
+    "x": FLOAT,
+    "y": FLOAT,
+    "theta": radians as FLOAT,
+    "owner": STRING,
+    "speed": FLOAT,
+    "damage": FLOAT,
+    "type": INT(0,1),
+    "dead": INT <- 0 if alive
+}
+```
+
+(GAME) LINE:
+```json
+[p as {"x": FLOAT, "y" FLOAT}, q as {"x": FLOAT, "y": FLOAT}]
+```
+
+
+# Troubleshooting Windows
+
+Anaconda Python (2.7, 32-Bit) instalieren, da dort Numpy enthalten ist.
+WICHTIG: 32-Bit wegen pygame notwendig.
+
+https://www.continuum.io/downloads
+
+(OPTIONAL) Pygame installieren für die UI (32-bit).
+
+http://www.pygame.org/download.shtml
