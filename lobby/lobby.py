@@ -2,7 +2,7 @@ import json
 
 MIN_PLAYERS = 2
 MAX_PLAYERS = 16
-INIT_TIMEOUT = 1 * 30  # ~ 30 seconds lobby
+INIT_TIMEOUT = 30 * 15  # ~ 30 seconds lobby
 
 
 class Lobby(object):

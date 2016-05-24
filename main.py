@@ -2,7 +2,7 @@ import tankgame
 import sys
 import time
 
-TPS = 30
+TPS = 15
 pw = "wasd"
 port = 2016
 

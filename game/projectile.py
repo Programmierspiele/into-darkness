@@ -1,6 +1,6 @@
 import math
 
-SECONDARY_RADIUS = 10
+SECONDARY_RADIUS = 2.0
 PRIMARY_ANIMATION_TIME = 0.1 * 30
 SECONDARY_ANIMATION_TIME = 0.4 * 30
 
@@ -80,4 +80,4 @@ class Projectile(object):
                         dist = 1
                     if dist < 0.001:
                         dtheta = 0
-                    p.damage(self.damage * SECONDARY_RADIUS / dist, dtheta, self.owner)
+                    p.damage(self.damage * SECONDARY_RADIUS / (dist * dist), dtheta, self.owner)

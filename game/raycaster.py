@@ -47,11 +47,13 @@ class Raycaster(object):
     def __init__(self, players, map):
         self.players = players
         self.lines = list(map.get_lines())
+        self.lines_with_rects = list(map.get_lines_as_rects())
         self.map = map
         self.line_intersector = LineIntersector()
 
     def update(self):
-        self.lines = list(self.map.get_lines_as_rects())
+        self.lines = list(self.map.get_lines())
+        self.lines_with_rects = list(self.map.get_lines_as_rects())
         for player in self.players:
             p = self.players[player]
             x3 = p.get_pose()["x"] - p.get_size() / 2.0
@@ -60,11 +62,13 @@ class Raycaster(object):
             y4 = p.get_pose()["y"] + p.get_size() / 2.0
             self.lines.append([{"x": x3, "y": y3}, {"x": x4, "y": y4}, p])
             self.lines.append([{"x": x3, "y": y4}, {"x": x4, "y": y3}, p])
+            self.lines_with_rects.append([{"x": x3, "y": y3}, {"x": x4, "y": y4}, p])
+            self.lines_with_rects.append([{"x": x3, "y": y4}, {"x": x4, "y": y3}, p])
 
     def get_lines(self):
         return self.lines
 
-    def cast(self, ray, leave_out_player=None):
+    def cast(self, ray, leave_out_player=None, collision_mode=False):
         # Vision ray line
         x1 = ray["x"]
         y1 = ray["y"]
@@ -74,7 +78,10 @@ class Raycaster(object):
         p2 = np.array([x2, y2])
         closest = None
         closest_obj = None
-        for line in self.lines:
+        lines = self.lines
+        if collision_mode:
+            lines = self.lines_with_rects
+        for line in lines:
             if len(line) == 3 and line[2].name == leave_out_player:
                 continue
 

@@ -5,7 +5,7 @@ from map import Map
 import json
 import time
 
-TICKS_PER_GAME = 5 * 60 * 30  # 5 Minuten
+TICKS_PER_GAME = 5 * 60 * 15  # 5 Minuten
 FOV_IN_DEGREE = 120
 FOV = math.radians(FOV_IN_DEGREE)
 EPSILON = math.radians(0.001)

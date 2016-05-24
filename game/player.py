@@ -72,10 +72,26 @@ class Player(object):
 
     def spawn(self):
         self.health = 100.0
-        spawn_x = random.random() * self.game.map.get_map_size() - self.game.map.get_map_size() / 2
-        spawn_y = random.random() * self.game.map.get_map_size() - self.game.map.get_map_size() / 2
-        d = random.random() * math.pi * 2 - math.pi
-        self.pose = {"x": spawn_x, "y": spawn_y, "theta": d, "aim": d}
+        dlen = 0
+        while dlen < 2:
+            spawn_x = random.random() * self.game.map.get_map_size() - self.game.map.get_map_size() / 2
+            spawn_y = random.random() * self.game.map.get_map_size() - self.game.map.get_map_size() / 2
+            d = random.random() * math.pi * 2 - math.pi
+            self.pose = {"x": spawn_x, "y": spawn_y, "theta": d, "aim": d}
+            tx, ty, obj = self.raycaster.cast({"x": self.pose["x"], "y": self.pose["y"], "theta": self.pose["theta"]}, self.name, collision_mode=True)
+            dtx = tx - self.pose["x"]
+            dty = ty - self.pose["y"]
+            dlen = dtx * dtx + dty * dty
+
+            tx, ty, obj = self.raycaster.cast({"x": self.pose["x"], "y": self.pose["y"], "theta": self.pose["theta"] + math.radians(45)}, self.name, collision_mode=True)
+            dtx = tx - self.pose["x"]
+            dty = ty - self.pose["y"]
+            dlen = min(dlen, dtx * dtx + dty * dty)
+
+            tx, ty, obj = self.raycaster.cast({"x": self.pose["x"], "y": self.pose["y"], "theta": self.pose["theta"] - math.radians(45)}, self.name, collision_mode=True)
+            dtx = tx - self.pose["x"]
+            dty = ty - self.pose["y"]
+            dlen = min(dlen, dtx * dtx + dty * dty)
 
     def get_pose(self):
         return {"x": self.pose["x"], "y": self.pose["y"], "theta": self.pose["theta"]}
@@ -123,9 +139,9 @@ class Player(object):
         
         # Check how far the robot can move.
         if self.movespeed >= 0:
-            tx, ty, obj = self.raycaster.cast({"x": self.pose["x"], "y": self.pose["y"], "theta": self.pose["theta"]}, self.name)
+            tx, ty, obj = self.raycaster.cast({"x": self.pose["x"], "y": self.pose["y"], "theta": self.pose["theta"]}, self.name, collision_mode=True)
         else:
-            tx, ty, obj = self.raycaster.cast({"x": self.pose["x"], "y": self.pose["y"], "theta": self.pose["theta"] - math.pi}, self.name)
+            tx, ty, obj = self.raycaster.cast({"x": self.pose["x"], "y": self.pose["y"], "theta": self.pose["theta"] - math.pi}, self.name, collision_mode=True)
 
         # Only if there is an obstacle do something about it...
         if tx is not None and ty is not None and obj is not None:
