@@ -21,19 +21,20 @@ class Player(object):
 
     @staticmethod
     def render(player, raycaster, screen, width, height, map_size):
+        if player["respawn"] > 0:
+            return
+
         scale = height / map_size
 
         x = int(player["x"] * scale)
         y = int(player["y"] * scale)
+
         pygame.draw.circle(screen, (255, 255, 255), (x + width // 2, -y + height // 2), max(1, int(1.0 * scale)), 1)
 
         pygame.draw.lines(screen, (255, 128, 128), False, [(x + width // 2, -y + height // 2),
                 (x + math.cos(player["aim"]) * scale * 3 + width // 2, -y -math.sin(player["aim"]) * scale * 3 + height // 2)], 5)
         pygame.draw.lines(screen, (255, 255, 128), False, [(x + width // 2, -y + height // 2),
                 (x + math.cos(player["theta"]) * scale * 5 + width // 2, -y -math.sin(player["theta"]) * scale * 5 + height // 2)], 2)
-
-        if player["respawn"] > 0:
-            return
 
         tx, ty, _ = raycaster.cast(
             {"x": player["x"], "y": player["y"], "theta": player["aim"]}, player["name"])

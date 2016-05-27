@@ -1,8 +1,9 @@
 import json
+import sys
 
 MIN_PLAYERS = 2
 MAX_PLAYERS = 16
-INIT_TIMEOUT = 30 * 15  # ~ 30 seconds lobby
+INIT_TIMEOUT = 1 * 15  # ~ 30 seconds lobby
 
 
 class Lobby(object):
@@ -22,20 +23,26 @@ class Lobby(object):
                 self.names.remove(self.players[event["sock"]])
                 del self.players[event["sock"]]
             if "packet" in event:
-                if "name" in event["packet"]:
-                    name = event["packet"]["name"]
-                    if name not in self.names:
-                        self.players[event["sock"]] = name
-                        self.names.append(name)
-                        event["sock"].send(json.dumps({"name": name}) + "\n")
-                    elif event["sock"] in self.players:
-                        event["sock"].send(json.dumps({"name": self.players[event["sock"]]}) + "\n")
-                    else:
-                        event["sock"].send(json.dumps({"name": None}) + "\n")
-                if "observer" in event["packet"]:
-                    pw = event["packet"]["observer"]
-                    if pw == self.parent.pw:
-                        self.observers.append(event["sock"])
+                try:
+                    if "name" in event["packet"]:
+                        name = event["packet"]["name"]
+                        if name not in self.names:
+                            self.players[event["sock"]] = name
+                            self.names.append(name)
+                            event["sock"].send(json.dumps({"name": name}) + "\n")
+                        elif event["sock"] in self.players:
+                            event["sock"].send(json.dumps({"name": None}) + "\n")
+                        else:
+                            event["sock"].send(json.dumps({"name": None}) + "\n")
+                    if "observer" in event["packet"]:
+                        pw = event["packet"]["observer"]
+                        if pw == self.parent.pw:
+                            self.observers.append(event["sock"])
+                except:
+                    try:
+                        event["sock"].send(str(sys.exc_info()[0]) + "\n")
+                    except:
+                        pass
     
         if len(self.players) >= MIN_PLAYERS:
           self.timeout -= 1

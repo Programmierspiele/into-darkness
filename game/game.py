@@ -4,6 +4,7 @@ from raycaster import Raycaster
 from map import Map
 import json
 import time
+import sys
 
 TICKS_PER_GAME = 5 * 60 * 15  # 5 Minuten
 FOV_IN_DEGREE = 120
@@ -54,25 +55,67 @@ class Game(object):
 
         for event in events:
             if event["sock"] not in self.players:
-                if "packet" in event and "observer" in event["packet"]:
-                    pw = event["packet"]["observer"]
-                    if pw == self.parent.pw:
-                        self.observers.append(event["sock"])
-                continue
+                try:
+                    if "packet" in event and "observer" in event["packet"]:
+                        pw = event["packet"]["observer"]
+                        if pw == self.parent.pw:
+                            self.observers.append(event["sock"])
+                        continue
+                    if "name" in event["packet"]:
+                        name = event["packet"]["name"]
+                        if name not in self.players.values():
+                            self.players[event["sock"]] = name
+                            self.player_entities[self.players[event["sock"]]] = Player(self.raycaster, self.players[event["sock"]], self)
+                            self.scores[self.players[event["sock"]]] = 0
+                            print("joined player")
+                            event["sock"].send(json.dumps({"name": name}) + "\n")
+                        elif event["sock"] in self.players.values():
+                            event["sock"].send(json.dumps({"name": None}) + "\n")
+                        else:
+                            event["sock"].send(json.dumps({"name": None}) + "\n")
+                        continue
+                    event["sock"].close()
+                except:
+                    try:
+                        event["sock"].send(str(sys.exc_info()[0]) + "\n")
+                        event["sock"].close()
+                    except:
+                        pass
+                    if event["sock"] not in self.players:
+                        continue
+                    print("Disconnected player.")
+                    del self.player_entities[self.players[event["sock"]]]
+                    del self.players[event["sock"]]
             if "disconnected" in event:
+                if event["sock"] not in self.players:
+                    continue
+                print("Disconnected player.")
+                del self.player_entities[self.players[event["sock"]]]
                 del self.players[event["sock"]]
             if "packet" in event:
-                packet = event["packet"]
-                sock = event["sock"]
-                player = self.player_entities[self.players[sock]]
-                if "speed" in packet:
-                    player.speed(packet["speed"])
-                if "turn" in packet:
-                    player.turn(packet["turn"])
-                if "aim" in packet:
-                    player.aim(packet["aim"])
-                if "shoot" in packet:
-                    player.shoot(packet["shoot"])
+                try:
+                    packet = event["packet"]
+                    sock = event["sock"]
+                    player = self.player_entities[self.players[sock]]
+                    if "speed" in packet:
+                        player.speed(packet["speed"])
+                    if "turn" in packet:
+                        player.turn(packet["turn"])
+                    if "aim" in packet:
+                        player.aim(packet["aim"])
+                    if "shoot" in packet:
+                        player.shoot(packet["shoot"])
+                except:
+                    try:
+                        event["sock"].send(str(sys.exc_info()[0]) + "\n")
+                        event["sock"].close()
+                    except:
+                        pass
+                    if event["sock"] not in self.players:
+                        continue
+                    print("Disconnected player.")
+                    del self.player_entities[self.players[event["sock"]]]
+                    del self.players[event["sock"]]
 
         for key in self.player_entities:
             self.player_entities[key].update(self.player_entities, self.projectile_entities)
